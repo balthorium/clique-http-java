@@ -8,6 +8,7 @@ import com.nimbusds.jose.jwk.ECKey;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.filter.LoggingFilter;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -29,15 +30,15 @@ public class HttpTransport implements Transport {
     public HttpTransport() {
         _cache = new MemoryTransport();
 
-        boolean useProxy = true;
+        boolean useProxy = false;
         if (useProxy) {
             _client = ClientBuilder.newClient(new ClientConfig()
                     .connectorProvider(new ApacheConnectorProvider())
-                    .property(ClientProperties.PROXY_URI, "http://localhost:8080"));
+                    .property(ClientProperties.PROXY_URI, "http://localhost:8080")
+                    .register(LoggingFilter.class));
         } else {
-//            _client = ClientBuilder.newClient(new ClientConfig().register(LoggingFilter.class));
             _client = ClientBuilder.newClient(new ClientConfig()
-                    .connectorProvider(new ApacheConnectorProvider()));
+                    .register(LoggingFilter.class));
         }
     }
 
