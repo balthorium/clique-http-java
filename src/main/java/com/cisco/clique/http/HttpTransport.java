@@ -15,37 +15,41 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import java.net.URI;
+import java.net.URL;
 
 public class HttpTransport implements Transport {
 
     public static final String GET_KEY_REQUEST_URL_TEMPLATE =
-            "https://cliquey.io/api/v1/keys/{pkt}";
+            "{serviceUrl}/api/v1/keys/{pkt}";
 
     public static final String PUT_KEY_REQUEST_URL_TEMPLATE =
-            "https://cliquey.io/api/v1/keys";
+            "{serviceUrl}/api/v1/keys";
 
+    private URL _serviceUrl;
     private MemoryTransport _cache;
     private Client _client;
 
-    public HttpTransport() {
+    public HttpTransport(URL serviceUrl) {
+        _serviceUrl = serviceUrl;
         _cache = new MemoryTransport();
+        _client = ClientBuilder.newClient(new ClientConfig()
+                .register(LoggingFilter.class));
+    }
 
-        boolean useProxy = false;
-        if (useProxy) {
-            _client = ClientBuilder.newClient(new ClientConfig()
-                    .connectorProvider(new ApacheConnectorProvider())
-                    .property(ClientProperties.PROXY_URI, "http://localhost:8080")
-                    .register(LoggingFilter.class));
-        } else {
-            _client = ClientBuilder.newClient(new ClientConfig()
-                    .register(LoggingFilter.class));
-        }
+    public HttpTransport(URL serviceUrl, URL proxyUrl) {
+        _serviceUrl = serviceUrl;
+        _cache = new MemoryTransport();
+        _client = ClientBuilder.newClient(new ClientConfig()
+                .connectorProvider(new ApacheConnectorProvider())
+                .property(ClientProperties.PROXY_URI, proxyUrl.toString())
+                .register(LoggingFilter.class));
     }
 
     @Override
     public void putKey(ECKey key) throws Exception {
         _cache.putKey(key);
         _client.target(PUT_KEY_REQUEST_URL_TEMPLATE)
+                .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .post(Entity.entity(new PublicKey(key), MediaType.APPLICATION_JSON_TYPE));
     }
@@ -55,6 +59,7 @@ public class HttpTransport implements Transport {
         ECKey key = _cache.getKey(pkt);
         if (null == key) {
             PublicKey keyDto = _client.target(GET_KEY_REQUEST_URL_TEMPLATE)
+                    .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
                     .resolveTemplate("pkt", pkt)
                     .request(MediaType.APPLICATION_JSON_TYPE)
                     .get(PublicKey.class);
