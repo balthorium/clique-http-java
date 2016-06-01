@@ -8,7 +8,7 @@ import com.nimbusds.jose.util.Base64URL;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PublicKey {
+public class PublicKeyDto {
 
     private String _kid;
     private String _crv;
@@ -16,10 +16,10 @@ public class PublicKey {
     private String _x;
     private String _y;
 
-    public PublicKey() {
+    public PublicKeyDto() {
     }
 
-    public PublicKey(ECKey key) throws Exception {
+    public PublicKeyDto(ECKey key) throws Exception {
         _kid = key.getKeyID();
         _crv = key.getCurve().getName();
         _kty = key.getKeyType().getValue();

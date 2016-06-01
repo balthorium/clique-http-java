@@ -1,15 +1,15 @@
 package com.cisco.clique.http;
 
-import com.cisco.clique.http.dto.PublicKey;
+import com.cisco.clique.http.dto.PublicKeyDto;
 import com.cisco.clique.sdk.MemoryTransport;
 import com.cisco.clique.sdk.Transport;
-import com.cisco.clique.sdk.chains.AbstractChain;
+import com.cisco.clique.sdk.chains.*;
+import com.cisco.clique.sdk.validation.AbstractValidator;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.nimbusds.jose.jwk.ECKey;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.filter.LoggingFilter;
-
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -19,11 +19,17 @@ import java.net.URL;
 
 public class HttpTransport implements Transport {
 
+    public static final String PUT_KEY_REQUEST_URL_TEMPLATE =
+            "{serviceUrl}/api/v1/keys";
+
     public static final String GET_KEY_REQUEST_URL_TEMPLATE =
             "{serviceUrl}/api/v1/keys/{pkt}";
 
-    public static final String PUT_KEY_REQUEST_URL_TEMPLATE =
-            "{serviceUrl}/api/v1/keys";
+    public static final String PUT_CHAIN_REQUEST_URL_TEMPLATE =
+            "{serviceUrl}/api/v1/chains/{uri}";
+
+    public static final String GET_CHAIN_REQUEST_URL_TEMPLATE =
+            "{serviceUrl}/api/v1/chains/{uri}";
 
     private URL _serviceUrl;
     private MemoryTransport _cache;
@@ -33,7 +39,7 @@ public class HttpTransport implements Transport {
         _serviceUrl = serviceUrl;
         _cache = new MemoryTransport();
         _client = ClientBuilder.newClient(new ClientConfig()
-                .register(LoggingFilter.class));
+                .register(new LoggingFilter()));
     }
 
     public HttpTransport(URL serviceUrl, URL proxyUrl) {
@@ -42,41 +48,81 @@ public class HttpTransport implements Transport {
         _client = ClientBuilder.newClient(new ClientConfig()
                 .connectorProvider(new ApacheConnectorProvider())
                 .property(ClientProperties.PROXY_URI, proxyUrl.toString())
-                .register(LoggingFilter.class));
+                .register(new LoggingFilter()));
     }
 
     @Override
     public void putKey(ECKey key) throws Exception {
-        _cache.putKey(key);
-        _client.target(PUT_KEY_REQUEST_URL_TEMPLATE)
-                .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
-                .request(MediaType.APPLICATION_JSON_TYPE)
-                .post(Entity.entity(new PublicKey(key), MediaType.APPLICATION_JSON_TYPE));
+        if (null == _cache.getKey(key.computeThumbprint().toString())) {
+            _cache.putKey(key);
+            _client.target(PUT_KEY_REQUEST_URL_TEMPLATE)
+                    .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
+                    .request(MediaType.APPLICATION_JSON_TYPE)
+                    .post(Entity.entity(new PublicKeyDto(key), MediaType.APPLICATION_JSON_TYPE));
+        }
     }
 
     @Override
     public ECKey getKey(String pkt) throws Exception {
         ECKey key = _cache.getKey(pkt);
         if (null == key) {
-            PublicKey keyDto = _client.target(GET_KEY_REQUEST_URL_TEMPLATE)
+            PublicKeyDto keyDto = _client.target(GET_KEY_REQUEST_URL_TEMPLATE)
                     .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
                     .resolveTemplate("pkt", pkt)
                     .request(MediaType.APPLICATION_JSON_TYPE)
-                    .get(PublicKey.class);
+                    .get(PublicKeyDto.class);
             key = keyDto.getKey();
             _cache.putKey(key);
         }
         return key;
     }
 
-    @Override
-    public void putChain(AbstractChain abstractChain) throws Exception {
-        _cache.putChain(abstractChain);
+    public void putChain(AbstractChain<? extends AbstractBlock> abstractChain) throws Exception {
+        for (AbstractBlock block : abstractChain.getBlocks()) {
+            _client.target(PUT_CHAIN_REQUEST_URL_TEMPLATE)
+                    .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
+                    .resolveTemplate("uri", abstractChain.getSubject().toString())
+                    .request(MediaType.APPLICATION_JSON_TYPE)
+                    .post(Entity.entity(block.serialize(), "application/jose"));
+        }
+    }
+
+    public ArrayNode getChain(URI uri) throws Exception {
+            return _client.target(GET_CHAIN_REQUEST_URL_TEMPLATE)
+                    .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
+                    .resolveTemplate("uri", uri)
+                    .request(MediaType.APPLICATION_JSON_TYPE)
+                    .get(ArrayNode.class);
     }
 
     @Override
-    public AbstractChain getChain(URI uri) throws Exception {
-        return _cache.getChain(uri);
+    public void putIdChain(AbstractChain<IdBlock> abstractChain) throws Exception {
+        _cache.putIdChain(abstractChain);
+        putChain(abstractChain);
+    }
+
+    @Override
+    public AbstractChain<IdBlock> getIdChain(AbstractValidator<IdBlock> validator, URI uri) throws Exception {
+        AbstractChain<IdBlock> chain = _cache.getIdChain(validator, uri);
+        if (null == chain) {
+            chain = new IdChain(validator, getChain(uri));
+        }
+        return chain;
+    }
+
+    @Override
+    public void putAuthChain(AbstractChain<AuthBlock> abstractChain) throws Exception {
+        _cache.putAuthChain(abstractChain);
+        putChain(abstractChain);
+    }
+
+    @Override
+    public AbstractChain<AuthBlock> getAuthChain(AbstractValidator<AuthBlock> validator, URI uri) throws Exception {
+        AbstractChain<AuthBlock> chain = _cache.getAuthChain(validator, uri);
+        if (null == chain) {
+            chain = new AuthChain(validator, getChain(uri));
+        }
+        return chain;
     }
 
     @Override
