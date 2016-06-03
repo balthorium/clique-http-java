@@ -22,7 +22,9 @@ public class LoggingFilter implements ClientRequestFilter, ClientResponseFilter 
     }
 
     @Override
-    public void filter(ClientRequestContext clientRequestContext, ClientResponseContext clientResponseContext) throws IOException {
+    public void filter(
+            ClientRequestContext clientRequestContext,
+            ClientResponseContext clientResponseContext) throws IOException {
         LOG.debug("Response: " + String.valueOf(clientResponseContext.getStatus()));
         if (LOG.isDebugEnabled() && clientResponseContext.hasEntity()) {
             InputStream is = new BufferedInputStream(clientResponseContext.getEntityStream());

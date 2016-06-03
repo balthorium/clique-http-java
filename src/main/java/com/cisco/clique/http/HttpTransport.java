@@ -9,6 +9,7 @@ import com.nimbusds.jose.jwk.ECKey;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -41,8 +42,7 @@ public class HttpTransport implements Transport {
         if (null == proxyUrl) {
             _client = ClientBuilder.newClient(new ClientConfig()
                     .register(new LoggingFilter()));
-        }
-        else {
+        } else {
             _client = ClientBuilder.newClient(new ClientConfig()
                     .connectorProvider(new ApacheConnectorProvider())
                     .property(ClientProperties.PROXY_URI, proxyUrl)
@@ -87,11 +87,11 @@ public class HttpTransport implements Transport {
     }
 
     public String getChain(URI uri) throws Exception {
-            return _client.target(GET_CHAIN_REQUEST_URL_TEMPLATE)
-                    .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
-                    .resolveTemplate("uri", uri)
-                    .request(MediaType.APPLICATION_JSON_TYPE)
-                    .get(String.class);
+        return _client.target(GET_CHAIN_REQUEST_URL_TEMPLATE)
+                .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
+                .resolveTemplate("uri", uri)
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .get(String.class);
     }
 
     @Override
