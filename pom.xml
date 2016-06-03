@@ -99,8 +99,17 @@
     </distributionManagement>
 
     <build>
-        <plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>checkstyle.xml</exclude>
+                    <exclude>findbugs-exclude.xml</exclude>
+                </excludes>
+            </resource>
+        </resources>
 
+        <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -214,7 +223,6 @@
                     <show>public</show>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 </project>
