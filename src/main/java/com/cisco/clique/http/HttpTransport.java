@@ -1,11 +1,10 @@
 package com.cisco.clique.http;
 
-import com.cisco.clique.http.dto.PublicKeyDto;
+import com.cisco.clique.http.dto.DtoPublicKey;
 import com.cisco.clique.sdk.MemoryTransport;
 import com.cisco.clique.sdk.Transport;
 import com.cisco.clique.sdk.chains.*;
 import com.cisco.clique.sdk.validation.AbstractValidator;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.nimbusds.jose.jwk.ECKey;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
@@ -58,7 +57,7 @@ public class HttpTransport implements Transport {
             _client.target(PUT_KEY_REQUEST_URL_TEMPLATE)
                     .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
                     .request(MediaType.APPLICATION_JSON_TYPE)
-                    .post(Entity.entity(new PublicKeyDto(key), MediaType.APPLICATION_JSON_TYPE));
+                    .post(Entity.entity(new DtoPublicKey(key), MediaType.APPLICATION_JSON_TYPE));
         }
     }
 
@@ -66,11 +65,11 @@ public class HttpTransport implements Transport {
     public ECKey getKey(String pkt) throws Exception {
         ECKey key = _cache.getKey(pkt);
         if (null == key) {
-            PublicKeyDto keyDto = _client.target(GET_KEY_REQUEST_URL_TEMPLATE)
+            DtoPublicKey keyDto = _client.target(GET_KEY_REQUEST_URL_TEMPLATE)
                     .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
                     .resolveTemplate("pkt", pkt)
                     .request(MediaType.APPLICATION_JSON_TYPE)
-                    .get(PublicKeyDto.class);
+                    .get(DtoPublicKey.class);
             key = keyDto.getKey();
             _cache.putKey(key);
         }
@@ -87,12 +86,12 @@ public class HttpTransport implements Transport {
         }
     }
 
-    public ArrayNode getChain(URI uri) throws Exception {
+    public String getChain(URI uri) throws Exception {
             return _client.target(GET_CHAIN_REQUEST_URL_TEMPLATE)
                     .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
                     .resolveTemplate("uri", uri)
                     .request(MediaType.APPLICATION_JSON_TYPE)
-                    .get(ArrayNode.class);
+                    .get(String.class);
     }
 
     @Override

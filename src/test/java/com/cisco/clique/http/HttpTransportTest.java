@@ -42,9 +42,6 @@ public class HttpTransportTest {
         Security.addProvider(new BouncyCastleProvider());
         _serviceUrl = new URL("https://cliquey.io");
         _proxyUrl = new URL("http://localhost:8080");
-        _aliceUri = URI.create("uri:clique:alice:" + UUID.randomUUID().toString());
-        _bobUri = URI.create("uri:clique:bob:" + UUID.randomUUID().toString());
-        _resourceUri = URI.create("uri:clique:resource:" + UUID.randomUUID().toString());
         _privilege = "read";
     }
 
@@ -53,6 +50,9 @@ public class HttpTransportTest {
 //        _transport = new HttpTransport(_serviceUrl, _proxyUrl);
         _transport = new HttpTransport(_serviceUrl);
         _trustRoots = new HashSet<>();
+        _aliceUri = URI.create("uri:clique:alice:" + UUID.randomUUID().toString());
+        _bobUri = URI.create("uri:clique:bob:" + UUID.randomUUID().toString());
+        _resourceUri = URI.create("http://example.com/some/distributed/resource" + UUID.randomUUID().toString());
     }
 
     ECKey generateKeyPair() throws Exception {
@@ -65,7 +65,7 @@ public class HttpTransportTest {
                 .build();
     }
 
-    @Test(enabled = false)
+    @Test
     public void putKeyGetKeyTest() throws Exception {
         ECKey key1 = generateKeyPair();
         _transport.putKey(key1.toPublicJWK());
@@ -101,6 +101,16 @@ public class HttpTransportTest {
     public void putAuthChainGetAuthChainTest() throws Exception {
         ECKey key = generateKeyPair();
         _transport.putKey(key);
+
+        IdChain idChain = new IdChain(new IdBlockValidator(_transport, _trustRoots));
+        idChain.newBlockBuilder()
+                .setIssuer(_aliceUri)
+                .setIssuerKey(key)
+                .setSubject(_aliceUri)
+                .setSubjectPubKey(key.toPublicJWK())
+                .build();
+
+        _transport.putChain(idChain);
 
         AuthChain chain1 = new AuthChain(new AuthBlockValidator(_transport, _trustRoots));
         chain1.newBlockBuilder()
