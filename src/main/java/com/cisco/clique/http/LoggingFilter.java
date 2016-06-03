@@ -14,7 +14,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class LoggingFilter implements ClientRequestFilter, ClientResponseFilter {
-    private static final Logger LOG = LogManager.getLogger(HttpTransport.class.getName());
+    private static final Logger LOG = LogManager.getLogger(LoggingFilter.class.getName());
 
     @Override
     public void filter(ClientRequestContext clientRequestContext) throws IOException {

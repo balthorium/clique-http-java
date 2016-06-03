@@ -68,6 +68,7 @@ public class HttpTransportTest {
         _transport.putKey(key1.toPublicJWK());
         _transport.clear();
         ECKey key2 = _transport.getKey(key1.computeThumbprint().toString());
+        assertNotNull(key2);
         assertEquals(key2.computeThumbprint(), key1.computeThumbprint());
     }
 
@@ -85,12 +86,46 @@ public class HttpTransportTest {
                 .setSubjectPubKey(key.toPublicJWK())
                 .build();
 
-        _transport.putChain(chain1);
+        _transport.putIdChain(chain1);
 
         _transport.clear();
 
         AbstractChain chain2 = _transport.getIdChain(new IdBlockValidator(_transport, _trustRoots), _aliceUri);
         assertNotNull(chain2);
+        assertEquals(chain2, chain1);
+    }
+
+    @Test
+    public void putMultiBlockIdChainGetMultiBLockIdChainTest() throws Exception {
+
+        ECKey key1 = generateKeyPair();
+        _transport.putKey(key1);
+
+        IdChain chain1 = new IdChain(new IdBlockValidator(_transport, _trustRoots));
+        chain1.newBlockBuilder()
+                .setIssuer(_aliceUri)
+                .setIssuerKey(key1)
+                .setSubject(_aliceUri)
+                .setSubjectPubKey(key1.toPublicJWK())
+                .build();
+
+        ECKey key2 = generateKeyPair();
+        _transport.putKey(key2);
+
+        chain1.newBlockBuilder()
+                .setIssuer(_aliceUri)
+                .setIssuerKey(key1)
+                .setSubject(_aliceUri)
+                .setSubjectPubKey(key2.toPublicJWK())
+                .build();
+
+        _transport.putIdChain(chain1);
+
+        _transport.clear();
+
+        AbstractChain chain2 = _transport.getIdChain(new IdBlockValidator(_transport, _trustRoots), _aliceUri);
+        assertNotNull(chain2);
+        assertEquals(chain2, chain1);
     }
 
 
@@ -107,7 +142,7 @@ public class HttpTransportTest {
                 .setSubjectPubKey(key.toPublicJWK())
                 .build();
 
-        _transport.putChain(idChain);
+        _transport.putIdChain(idChain);
 
         AuthChain chain1 = new AuthChain(new AuthBlockValidator(_transport, _trustRoots));
         chain1.newBlockBuilder()
@@ -116,11 +151,65 @@ public class HttpTransportTest {
                 .setSubject(_resourceUri)
                 .addGrant(new AuthBlock.Grant(AuthBlock.Grant.Type.VIRAL_GRANT, _bobUri, _privilege))
                 .build();
-        _transport.putChain(chain1);
+        _transport.putAuthChain(chain1);
 
         _transport.clear();
 
         AuthChain chain2 = (AuthChain) _transport.getAuthChain(new AuthBlockValidator(_transport, _trustRoots), chain1.getSubject());
+        assertNotNull(chain2);
         assertEquals(chain2, chain1);
+    }
+
+    @Test
+    public void putMultiBlockAuthChainGetMultiBlockAuthChainTest() throws Exception {
+        ECKey keyAlice = generateKeyPair();
+        _transport.putKey(keyAlice);
+
+        IdChain idChainAlice = new IdChain(new IdBlockValidator(_transport, _trustRoots));
+        idChainAlice.newBlockBuilder()
+                .setIssuer(_aliceUri)
+                .setIssuerKey(keyAlice)
+                .setSubject(_aliceUri)
+                .setSubjectPubKey(keyAlice.toPublicJWK())
+                .build();
+
+        _transport.putIdChain(idChainAlice);
+
+        ECKey keyBob = generateKeyPair();
+        _transport.putKey(keyBob);
+
+        IdChain idChainBob = new IdChain(new IdBlockValidator(_transport, _trustRoots));
+        idChainBob.newBlockBuilder()
+                .setIssuer(_bobUri)
+                .setIssuerKey(keyBob)
+                .setSubject(_bobUri)
+                .setSubjectPubKey(keyBob.toPublicJWK())
+                .build();
+
+        _transport.putIdChain(idChainBob);
+
+        AuthChain authChain1 = new AuthChain(new AuthBlockValidator(_transport, _trustRoots));
+        authChain1.newBlockBuilder()
+                .setIssuer(_aliceUri)
+                .setIssuerKey(keyAlice)
+                .setSubject(_resourceUri)
+                .addGrant(new AuthBlock.Grant(AuthBlock.Grant.Type.VIRAL_GRANT, _aliceUri, _privilege))
+                .addGrant(new AuthBlock.Grant(AuthBlock.Grant.Type.GRANT, _bobUri, _privilege))
+                .build();
+
+        authChain1.newBlockBuilder()
+                .setIssuer(_aliceUri)
+                .setIssuerKey(keyAlice)
+                .setSubject(_resourceUri)
+                .addGrant(new AuthBlock.Grant(AuthBlock.Grant.Type.REVOKE, _bobUri, _privilege))
+                .build();
+
+        _transport.putAuthChain(authChain1);
+
+        _transport.clear();
+
+        AuthChain authChain2 = (AuthChain) _transport.getAuthChain(new AuthBlockValidator(_transport, _trustRoots), authChain1.getSubject());
+        assertNotNull(authChain2);
+        assertEquals(authChain2, authChain1);
     }
 }
