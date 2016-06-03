@@ -21,7 +21,6 @@
         <surefire.version>2.19.1</surefire.version>
         <checkstyle.version>2.17</checkstyle.version>
         <findbugs.version>3.0.3</findbugs.version>
-        <log4j.version>2.6</log4j.version>
         <bouncycastle.version>1.54</bouncycastle.version>
     </properties>
 
@@ -71,18 +70,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
@@ -129,7 +116,7 @@
                     <skipTests>${skip.unit.tests}</skipTests>
                     <systemPropertyVariables>
                         <!-- uncomment to use mitmproxy -->
-                        <clique.proxy.url>http://localhost:8080</clique.proxy.url>
+                        <!--<clique.proxy.url>http://localhost:8080</clique.proxy.url>-->
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
