@@ -31,7 +31,6 @@ public class HttpTransportTest {
     private HttpTransport _transport;
     private Set<String> _trustRoots;
     private URL _serviceUrl;
-    private URL _proxyUrl;
     private URI _aliceUri;
     private URI _bobUri;
     private URI _resourceUri;
@@ -41,13 +40,11 @@ public class HttpTransportTest {
     public void suiteSetUp() throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         _serviceUrl = new URL("https://cliquey.io");
-        _proxyUrl = new URL("http://localhost:8080");
         _privilege = "read";
     }
 
     @BeforeMethod
     public void testSetUp() {
-//        _transport = new HttpTransport(_serviceUrl, _proxyUrl);
         _transport = new HttpTransport(_serviceUrl);
         _trustRoots = new HashSet<>();
         _aliceUri = URI.create("uri:clique:alice:" + UUID.randomUUID().toString());

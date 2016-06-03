@@ -37,17 +37,17 @@ public class HttpTransport implements Transport {
     public HttpTransport(URL serviceUrl) {
         _serviceUrl = serviceUrl;
         _cache = new MemoryTransport();
-        _client = ClientBuilder.newClient(new ClientConfig()
-                .register(new LoggingFilter()));
-    }
-
-    public HttpTransport(URL serviceUrl, URL proxyUrl) {
-        _serviceUrl = serviceUrl;
-        _cache = new MemoryTransport();
-        _client = ClientBuilder.newClient(new ClientConfig()
-                .connectorProvider(new ApacheConnectorProvider())
-                .property(ClientProperties.PROXY_URI, proxyUrl.toString())
-                .register(new LoggingFilter()));
+        String proxyUrl = System.getProperty("clique.proxy.url");
+        if (null == proxyUrl) {
+            _client = ClientBuilder.newClient(new ClientConfig()
+                    .register(new LoggingFilter()));
+        }
+        else {
+            _client = ClientBuilder.newClient(new ClientConfig()
+                    .connectorProvider(new ApacheConnectorProvider())
+                    .property(ClientProperties.PROXY_URI, proxyUrl)
+                    .register(new LoggingFilter()));
+        }
     }
 
     @Override

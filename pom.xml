@@ -110,6 +110,10 @@
                 <configuration>
                     <argLine>${surefireArgLine}</argLine>
                     <skipTests>${skip.unit.tests}</skipTests>
+                    <systemPropertyVariables>
+                        <!-- uncomment to use mitmproxy -->
+                        <clique.proxy.url>http://localhost:8080</clique.proxy.url>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
 
