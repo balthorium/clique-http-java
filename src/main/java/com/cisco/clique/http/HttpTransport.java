@@ -13,6 +13,7 @@ import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -66,13 +67,17 @@ public class HttpTransport implements Transport {
     public ECKey getKey(String pkt) throws Exception {
         ECKey key = _cache.getKey(pkt);
         if (null == key) {
-            DtoPublicKey keyDto = _client.target(GET_KEY_REQUEST_URL_TEMPLATE)
-                    .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
-                    .resolveTemplate("pkt", pkt)
-                    .request(MediaType.APPLICATION_JSON_TYPE)
-                    .get(DtoPublicKey.class);
-            key = keyDto.getKey();
-            _cache.putKey(key);
+            try {
+                DtoPublicKey keyDto = _client.target(GET_KEY_REQUEST_URL_TEMPLATE)
+                        .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
+                        .resolveTemplate("pkt", pkt)
+                        .request(MediaType.APPLICATION_JSON_TYPE)
+                        .get(DtoPublicKey.class);
+                key = keyDto.getKey();
+                _cache.putKey(key);
+            } catch (NotFoundException nfe) {
+                key = null;
+            }
         }
         return key;
     }
@@ -88,11 +93,16 @@ public class HttpTransport implements Transport {
     }
 
     public String getChain(URI uri) throws Exception {
-        return _client.target(GET_CHAIN_REQUEST_URL_TEMPLATE)
-                .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
-                .resolveTemplate("uri", uri)
-                .request(MediaType.APPLICATION_JSON_TYPE)
-                .get(String.class);
+        try {
+            return _client.target(GET_CHAIN_REQUEST_URL_TEMPLATE)
+                    .resolveTemplateFromEncoded("serviceUrl", _serviceUrl)
+                    .resolveTemplate("uri", uri)
+                    .request(MediaType.APPLICATION_JSON_TYPE)
+                    .get(String.class);
+        }
+        catch(NotFoundException nfe){
+            return null;
+        }
     }
 
     @Override

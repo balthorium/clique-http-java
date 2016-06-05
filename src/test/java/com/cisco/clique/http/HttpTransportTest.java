@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 public class HttpTransportTest {
 
@@ -211,5 +212,18 @@ public class HttpTransportTest {
         AuthChain authChain2 = (AuthChain) _transport.getAuthChain(new AuthBlockValidator(_transport, _trustRoots), authChain1.getSubject());
         assertNotNull(authChain2);
         assertEquals(authChain2, authChain1);
+    }
+
+    @Test
+    public void getNonExistingKeyTest() throws Exception {
+        ECKey key1 = generateKeyPair();
+        ECKey key2 = _transport.getKey(key1.computeThumbprint().toString());
+        assertNull(key2);
+    }
+
+    @Test
+    public void getNonExistingChainTest() throws Exception {
+        AbstractChain chain2 = _transport.getIdChain(new IdBlockValidator(_transport, _trustRoots), _aliceUri);
+        assertNull(chain2);
     }
 }
