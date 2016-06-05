@@ -99,8 +99,7 @@ public class HttpTransport implements Transport {
                     .resolveTemplate("uri", uri)
                     .request(MediaType.APPLICATION_JSON_TYPE)
                     .get(String.class);
-        }
-        catch(NotFoundException nfe){
+        } catch (NotFoundException nfe) {
             return null;
         }
     }
