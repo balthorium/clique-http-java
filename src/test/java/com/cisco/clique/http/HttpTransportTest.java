@@ -222,8 +222,14 @@ public class HttpTransportTest {
     }
 
     @Test
-    public void getNonExistingChainTest() throws Exception {
+    public void getNonExistingIdChainTest() throws Exception {
         AbstractChain chain2 = _transport.getIdChain(new IdBlockValidator(_transport, _trustRoots), _aliceUri);
+        assertNull(chain2);
+    }
+
+    @Test
+    public void getNonExistingAuthChainTest() throws Exception {
+        AbstractChain chain2 = _transport.getAuthChain(new AuthBlockValidator(_transport, _trustRoots), _resourceUri);
         assertNull(chain2);
     }
 }

@@ -115,7 +115,10 @@ public class HttpTransport implements Transport {
     public AbstractChain<IdBlock> getIdChain(AbstractValidator<IdBlock> validator, URI uri) throws Exception {
         AbstractChain<IdBlock> chain = _cache.getIdChain(validator, uri);
         if (null == chain) {
-            chain = new IdChain(validator, getChain(uri));
+            String serialization = getChain(uri);
+            if (null != serialization) {
+                chain = new IdChain(validator, serialization);
+            }
         }
         return chain;
     }
@@ -130,7 +133,10 @@ public class HttpTransport implements Transport {
     public AbstractChain<AuthBlock> getAuthChain(AbstractValidator<AuthBlock> validator, URI uri) throws Exception {
         AbstractChain<AuthBlock> chain = _cache.getAuthChain(validator, uri);
         if (null == chain) {
-            chain = new AuthChain(validator, getChain(uri));
+            String serialization = getChain(uri);
+            if (null != serialization) {
+                chain = new AuthChain(validator, serialization);
+            }
         }
         return chain;
     }
