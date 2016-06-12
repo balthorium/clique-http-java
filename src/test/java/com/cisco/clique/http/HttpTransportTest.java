@@ -45,7 +45,7 @@ public class HttpTransportTest {
     }
 
     @BeforeMethod
-    public void testSetUp() {
+    public void testSetUp() throws Exception {
         _transport = new HttpTransport(_serviceUrl);
         _trustRoots = new HashSet<>();
         _aliceUri = URI.create("uri:clique:alice:" + UUID.randomUUID().toString());
