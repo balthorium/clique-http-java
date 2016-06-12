@@ -9,9 +9,9 @@ import com.nimbusds.jose.jwk.ECKey;
 import org.glassfish.hk2.api.Descriptor;
 import org.glassfish.hk2.api.Filter;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.spi.ConnectorProvider;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
@@ -37,7 +37,7 @@ public class HttpTransport implements Transport {
     private MemoryTransport _cache;
     private Client _client;
 
-    public HttpTransport(URL serviceUrl) {
+    public HttpTransport(URL serviceUrl) throws Exception {
         _serviceUrl = serviceUrl;
         _cache = new MemoryTransport();
         String proxyUrl = System.getProperty("clique.proxy.url");
@@ -45,8 +45,9 @@ public class HttpTransport implements Transport {
             _client = ClientBuilder.newClient(new ClientConfig())
                     .register(AndroidFriendlyFeature.class);
         } else {
+            String acp = "org.glassfish.jersey.apache.connector.ApacheConnectorProvider";
             _client = ClientBuilder.newClient(new ClientConfig()
-                    .connectorProvider(new ApacheConnectorProvider())
+                    .connectorProvider((ConnectorProvider) getClass().getClassLoader().loadClass(acp).newInstance())
                     .property(ClientProperties.PROXY_URI, proxyUrl)
                     .register(AndroidFriendlyFeature.class));
         }
